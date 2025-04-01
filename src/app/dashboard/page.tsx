@@ -16,10 +16,7 @@ import { API_BASE_URL, WS_URL, RECONNECT_DELAY } from '@/constants/routes';
 import Sidebar from '@/components/Sidebar';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
-
-
 const Dashboard: React.FC = () => {
-  // State management
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'metrics' | 'repositories' | 'tests' | 'settings'>('metrics');
   const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
@@ -53,22 +50,16 @@ const Dashboard: React.FC = () => {
   });
   const [editRepository, setEditRepository] = useState<Repository | null>(null);
   
-  // WebSocket reference and connection counter for exponential backoff
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef<number>(0);
-  const maxReconnectDelay = 30000; // 30 seconds maximum reconnection delay
-  // Add heartbeat interval ref
+  const maxReconnectDelay = 30000; 
   const heartbeatIntervalRef = useRef<number | null>(null);
-
-  // Toggle sidebar
   const toggleSidebar = (): void => {
     setSidebarCollapsed(prev => !prev);
   };
 
-  // Handle tab change
   const handleTabChange = (tab: 'metrics' | 'repositories' | 'tests' | 'settings'): void => {
     setActiveTab(tab);
-    // Load data specific to the tab
     switch (tab) {
       case 'repositories':
         fetchRepositories();
@@ -86,9 +77,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // WebSocket connection handler
   const connectWebSocket = useCallback(() => {
-    // Clean up existing connection if any
     if (wsRef.current) {
       wsRef.current.close();
     }
@@ -123,15 +112,14 @@ const Dashboard: React.FC = () => {
             }));
             break;
           case 'testResult':
-            // Update time series data when new test results come in
+
             fetchTimeSeriesData(timePeriod, selectedRepository);
-            // If we're on the tests tab and have a repository selected, update the tests
+       
             if (activeTab === 'tests' && selectedRepository) {
               fetchRepositoryTests(selectedRepository);
             }
             break;
           case 'repositoryUpdate':
-            // Refresh repositories when there's an update
             fetchRepositories();
             break;
           default:
@@ -145,7 +133,6 @@ const Dashboard: React.FC = () => {
     ws.onerror = (event: Event) => {
       console.error('WebSocket error:', event);
       setError("WebSocket connection error. Some data may not update in real-time.");
-      // Clear heartbeat on error
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
@@ -155,13 +142,11 @@ const Dashboard: React.FC = () => {
     ws.onclose = (event: CloseEvent) => {
       console.log(`WebSocket disconnected: ${event.code} ${event.reason}`);
       setWsStatus('disconnected');
-      // Clear heartbeat on close
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
       }
-      
-      // Implement exponential backoff for reconnection
+
       const delay = Math.min(
         RECONNECT_DELAY * Math.pow(1.5, reconnectAttempts.current),
         maxReconnectDelay
@@ -175,20 +160,14 @@ const Dashboard: React.FC = () => {
     wsRef.current = ws;
   }, [activeTab, selectedRepository, timePeriod]);
 
-  // Connect WebSocket on component mount
   useEffect(() => {
     connectWebSocket();
-    
-    // Cleanup on unmount
     return () => {
       if (wsRef.current) {
-        // Close code 1000 indicates normal closure
         wsRef.current.close(1000, "Component unmounted");
       }
     };
   }, [connectWebSocket]);
-
-  // Fetch metrics summary
   const fetchMetricsSummary = async (): Promise<void> => {
     setSectionLoading(prev => ({ ...prev, metrics: true }));
     try {
@@ -205,7 +184,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Fetch repositories
   const fetchRepositories = async (): Promise<void> => {
     setSectionLoading(prev => ({ ...prev, repositories: true }));
     try {
@@ -221,8 +199,6 @@ const Dashboard: React.FC = () => {
       setSectionLoading(prev => ({ ...prev, repositories: false }));
     }
   };
-
-  // Fetch time series data
   const fetchTimeSeriesData = async (period: string = '7d', repositoryId: string | null = null): Promise<void> => {
     try {
       let url = `${API_BASE_URL}/api/metrics/time-series?period=${period}`;
@@ -241,13 +217,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Fetch repository tests
   const fetchRepositoryTests = async (repositoryId: string): Promise<void> => {
     setSectionLoading(prev => ({ ...prev, tests: true }));
     try {
       let url = `${API_BASE_URL}/api/metrics/repositories/${repositoryId}/tests?`;
-      
-      // Add query parameters
+
       const params = new URLSearchParams();
       params.append('limit', testLimit.toString());
       params.append('sort', testSortField);
@@ -269,8 +243,6 @@ const Dashboard: React.FC = () => {
       setSectionLoading(prev => ({ ...prev, tests: false }));
     }
   };
-
-  // Fetch dashboard config
   const fetchDashboardConfig = async (userId?: string): Promise<void> => {
     setSectionLoading(prev => ({ ...prev, dashboard: true }));
     try {
@@ -291,7 +263,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Save dashboard config
   const saveDashboardConfig = async (config: DashboardConfig, userId: string): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/dashboard/config?userId=${userId}`, {
@@ -312,7 +283,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Create repository
   const createRepository = async (): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/repositories`, {
@@ -339,8 +309,6 @@ const Dashboard: React.FC = () => {
       setError("Failed to create repository. Please try again later.");
     }
   };
-
-  // Update repository
   const updateRepository = async (id: string, data: Partial<Repository>): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/repositories/${id}`, {
@@ -361,7 +329,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Delete repository
   const deleteRepository = async (id: string): Promise<void> => {
     if (!window.confirm('Are you sure you want to delete this repository? This action cannot be undone.')) {
       return;
@@ -384,8 +351,6 @@ const Dashboard: React.FC = () => {
       setError("Failed to delete repository. Please try again later.");
     }
   };
-
-  // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -405,8 +370,7 @@ const Dashboard: React.FC = () => {
     };
     
     fetchData();
-    
-    // Set up interval to refresh data periodically (every 5 minutes)
+
     const refreshInterval = setInterval(() => {
       fetchMetricsSummary();
       fetchTimeSeriesData(timePeriod, selectedRepository);
@@ -418,12 +382,10 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(refreshInterval);
   }, [timePeriod]);
 
-  // Update time series data when period or repository changes
   useEffect(() => {
     fetchTimeSeriesData(timePeriod, selectedRepository);
   }, [timePeriod, selectedRepository]);
 
-  // Fetch repository tests when selected repository changes
   useEffect(() => {
     if (selectedRepository) {
       fetchRepositoryTests(selectedRepository);
@@ -432,8 +394,6 @@ const Dashboard: React.FC = () => {
       setTestStatusCounts({});
     }
   }, [selectedRepository, testSortField, testSortOrder, testStatusFilter, testLimit]);
-
-  // Calculate pass rate trend from time series data
   const getPassRateTrend = (): string => {
     if (!timeSeriesData || timeSeriesData.length < 2) return "0%";
     
@@ -449,12 +409,11 @@ const Dashboard: React.FC = () => {
     return diff >= 0 ? `+${diff.toFixed(2)}%` : `${diff.toFixed(2)}%`;
   };
 
-  // Format date function
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString();
   };
 
-  // Prepare Chart.js data from timeSeriesData
+
   const prepareChartData = () => {
     if (!timeSeriesData || timeSeriesData.length === 0) {
       return {
@@ -463,7 +422,6 @@ const Dashboard: React.FC = () => {
       };
     }
 
-    // Extract dates for labels
     const labels = timeSeriesData.map(item => {
       const date = new Date(item.date);
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -508,7 +466,6 @@ const Dashboard: React.FC = () => {
     };
   };
 
-  // Chart options
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -540,7 +497,6 @@ const Dashboard: React.FC = () => {
     },
   };
 
-  // Prepare pass rate chart data
   const preparePassRateChartData = () => {
     if (!timeSeriesData || timeSeriesData.length === 0) {
       return {
@@ -549,13 +505,11 @@ const Dashboard: React.FC = () => {
       };
     }
 
-    // Extract dates for labels
+
     const labels = timeSeriesData.map(item => {
       const date = new Date(item.date);
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
-
-    // Calculate pass rate for each day
     const passRates = timeSeriesData.map(item => {
       if (!item.total || item.total === 0) return 0;
       return ((item.passed / item.total) * 100).toFixed(1);
@@ -567,7 +521,7 @@ const Dashboard: React.FC = () => {
         {
           label: 'Pass Rate (%)',
           data: passRates,
-          borderColor: 'rgb(249, 115, 22)', // f97316 (orange-500)
+          borderColor: 'rgb(249, 115, 22)', 
           backgroundColor: 'rgba(249, 115, 22, 0.2)',
           tension: 0.2,
           fill: true,
@@ -577,7 +531,6 @@ const Dashboard: React.FC = () => {
     };
   };
 
-  // Render repository list
   const renderRepositories = () => {
     return (
       <>
@@ -755,8 +708,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         )}
-        
-        {/* Edit Repository Modal */}
         {editRepository && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-gray-800 p-4 rounded-lg shadow-md max-w-2xl w-full border border-gray-700">
@@ -832,8 +783,6 @@ const Dashboard: React.FC = () => {
       </>
     );
   };
-
-  // Render repository tests
   const renderRepositoryTests = () => {
     return (
       <>
@@ -869,7 +818,6 @@ const Dashboard: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Test Status Summary */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
               <div 
                 className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-green-500 hover:border-green-400 hover:shadow-green-300/50 transition-all duration-300 cursor-pointer"
@@ -919,8 +867,6 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
-            {/* Tests Table */}
             <div className="bg-gray-800 rounded-lg shadow-md overflow-hidden mb-4 border border-gray-700">
               <div className="p-3 border-b border-gray-700 bg-gray-700 flex justify-between items-center">
                 <div className="flex items-center">
@@ -1098,8 +1044,6 @@ const Dashboard: React.FC = () => {
       </>
     );
   };
-
-  // Render dashboard settings
   const renderDashboardSettings = () => {
     return (
       <>
@@ -1196,11 +1140,9 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  // Render metrics dashboard
   const renderMetricsDashboard = () => {
     return (
       <>
-        {/* Time Period Selector */}
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold text-white">API Testing Metrics</h3>
           <div className="flex space-x-2">
@@ -1246,8 +1188,6 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Metrics Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <div className="bg-gray-900 p-4 rounded-md shadow-md border border-indigo-500/50 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center space-x-2 mb-3">
@@ -1301,8 +1241,6 @@ const Dashboard: React.FC = () => {
             <div className="mt-2 text-xs text-gray-400">Average test execution time</div>
           </div>
         </div>
-
-        {/* Test Status Distribution */}
         <h3 className="text-lg font-bold mb-3 text-white">Test Results by Status</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <div className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-green-500 hover:border-green-400 hover:shadow-green-300/50 transition-all duration-300">
@@ -1361,8 +1299,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Repository Selector */}
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-lg font-bold text-white">Test Results Over Time</h3>
           <select 
@@ -1378,8 +1314,6 @@ const Dashboard: React.FC = () => {
             ))}
           </select>
         </div>
-
-        {/* Pass Rate Chart */}
         <div className="bg-gray-800 p-4 rounded-lg shadow-md mb-6 border border-gray-700">
           <div className="flex justify-between items-center mb-3">
             <div className="text-sm font-semibold text-gray-300">
