@@ -127,5 +127,88 @@
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
+  /* Dashboard widgets */
+  .dashboard-widget {
+    transition: all 0.3s ease;
+  }
+
+  .dashboard-widget:hover {
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.3);
+  }
+
+  /* Custom scrollbar */
+  .hide-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 3px;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #f97316;
+  }
+
+  /* React Grid Layout styles overrides */
+  .react-grid-item.react-grid-placeholder {
+    background: rgba(249, 115, 22, 0.2) !important;
+    border: 1px dashed #f97316 !important;
+  }
+
+  .react-resizable-handle {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M0 0v10h10' fill='none' stroke='%23f97316' stroke-opacity='0.5'/%3E%3C/svg%3E") !important;
+    background-position: bottom right;
+    background-repeat: no-repeat;
+    background-origin: content-box;
+    box-sizing: border-box;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+  }
+
+  .react-resizable-handle:hover {
+    opacity: 1;
+  }
+
+  /* Custom animations */
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+    }
+  }
+
+  .pulse-animation {
+    animation: pulse 2s infinite;
+  }
+
+  /* Transition effects */
+  .fade-in {
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .slide-in {
+    animation: slideIn 0.3s ease-in;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
 }
 

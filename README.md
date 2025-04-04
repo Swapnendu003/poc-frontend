@@ -9,6 +9,8 @@
 - **Customizable Dashboard**: Configure your dashboard to show the metrics that matter most to you
 - **Time Series Analysis**: Analyze trends in your API test results over time
 - **Responsive Design**: Access your dashboard from any device with a fully responsive UI
+- **Component Library**: Quickly add and manage custom dashboard widgets
+- **Multiple Chart Types**: Visualize test results as line, bar, pie, doughnut, or gauge
 
 ## 🖥️ Dashboard Overview
 

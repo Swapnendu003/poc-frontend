@@ -8,12 +8,20 @@ import {
   TimeSeriesDataPoint, 
   TestResult, 
   RepositoryTestsResponse, 
-  DashboardWidget, 
+  DashboardWidgetType, 
   DashboardConfig, 
   WebSocketMessage 
 } from '@/types/dashboardTypes';
 import { API_BASE_URL, WS_URL, RECONNECT_DELAY } from '@/constants/routes';
 import Sidebar from '@/components/Sidebar';
+import { Responsive, WidthProvider } from "react-grid-layout";
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+import DashboardWidget from '@/components/DashboardWidget';
+import ComponentLibrary from '@/components/ComponentLibrary';
+import { DashboardComponent, LayoutConfig } from '@/types/dashboardTypes';
+
+const ResponsiveGridLayout = WidthProvider(Responsive);
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 const Dashboard: React.FC = () => {
@@ -26,7 +34,7 @@ const Dashboard: React.FC = () => {
   const [repositoryTests, setRepositoryTests] = useState<TestResult[]>([]);
   const [testStatusCounts, setTestStatusCounts] = useState<{[key: string]: number}>({});
   const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig | null>(null);
-  const [timePeriod, setTimePeriod] = useState<'24h' | '7d' | '30d' | '90d'>('7d');
+  const [timePeriod, setTimePeriod] = useState<'24h' | '7d' | '30d' | '90d'>('30d');
   const [loading, setLoading] = useState<boolean>(true);
   const [sectionLoading, setSectionLoading] = useState<{[key: string]: boolean}>({
     metrics: false,
@@ -49,6 +57,17 @@ const Dashboard: React.FC = () => {
     status: 'active'
   });
   const [editRepository, setEditRepository] = useState<Repository | null>(null);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [availableComponents, setAvailableComponents] = useState<DashboardComponent[]>([]);
+  const [layouts, setLayouts] = useState<{[key: string]: LayoutConfig[]}>({
+    lg: [],
+    md: [],
+    sm: [],
+    xs: []
+  });
+  const [showComponentLibrary, setShowComponentLibrary] = useState<boolean>(false);
+  const [selectedComponentForEdit, setSelectedComponentForEdit] = useState<string | null>(null);
+  const [forceCustom, setForceCustom] = useState(false);
   
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef<number>(0);
@@ -531,6 +550,194 @@ const Dashboard: React.FC = () => {
     };
   };
 
+  const onLayoutChange = (currentLayout: LayoutConfig[], allLayouts: {[key: string]: LayoutConfig[]}) => {
+    setLayouts(allLayouts);
+    
+    // Update dashboard config with new layout
+    if (dashboardConfig) {
+      const updatedWidgets = dashboardConfig.widgets.map(widget => {
+        const layoutItem = currentLayout.find(item => item.i === widget.widgetKey);
+        if (layoutItem) {
+          return {
+            ...widget,
+            position: {
+              x: layoutItem.x,
+              y: layoutItem.y,
+              w: layoutItem.w,
+              h: layoutItem.h
+            }
+          };
+        }
+        return widget;
+      });
+      
+      setDashboardConfig({
+        ...dashboardConfig,
+        widgets: updatedWidgets
+      });
+    }
+  };
+
+  const addComponentToDashboard = (component: DashboardComponent) => {
+    const localConfig = dashboardConfig || { widgets: [] };
+    const newWidgetKey = `widget-${Date.now()}`;
+    const newWidget: DashboardWidgetType = {
+      widgetKey: newWidgetKey,
+      title: component.name,
+      type: component.type,
+      dataSource: component.defaultDataSource || 'metrics',
+      position: { x: 0, y: Infinity, w: component.defaultSize.w, h: component.defaultSize.h },
+      settings: component.defaultSettings || {}
+    };
+    const updatedConfig = {
+      ...localConfig,
+      widgets: [...localConfig.widgets, newWidget]
+    };
+    setDashboardConfig({
+      ...dashboardConfig,
+      widgets: updatedConfig.widgets,
+      userId: dashboardConfig?.userId || 'Swapnendu003', 
+      name: dashboardConfig?.name || 'Default Name',
+    });
+  
+    // Update layouts
+    const newLayouts = { ...layouts };
+    Object.keys(newLayouts).forEach(bp => {
+      newLayouts[bp] = [
+        ...newLayouts[bp],
+        {
+          i: newWidgetKey,
+          x: 0, y: Infinity,
+          w: component.defaultSize.w, h: component.defaultSize.h,
+          minW: 2, minH: 2
+        }
+      ];
+    });
+    setLayouts(newLayouts);
+    setShowComponentLibrary(false);
+  };
+
+  const removeWidgetFromDashboard = (widgetKey: string) => {
+    if (!dashboardConfig) return;
+    
+    // Remove widget from config
+    setDashboardConfig({
+      ...dashboardConfig,
+      widgets: dashboardConfig.widgets.filter(widget => widget.widgetKey !== widgetKey)
+    });
+    
+    // Remove from layouts
+    const newLayouts = {...layouts};
+    Object.keys(newLayouts).forEach(breakpoint => {
+      newLayouts[breakpoint] = newLayouts[breakpoint].filter(item => item.i !== widgetKey);
+    });
+    
+    setLayouts(newLayouts);
+  };
+
+  const updateWidgetSettings = (widgetKey: string, newSettings: any) => {
+    if (!dashboardConfig) return;
+    
+    // Update widget settings
+    setDashboardConfig({
+      ...dashboardConfig,
+      widgets: dashboardConfig.widgets.map(widget => 
+        widget.widgetKey === widgetKey ? { ...widget, settings: { ...widget.settings, ...newSettings } } : widget
+      )
+    });
+  };
+
+  const initializeLayouts = (widgets: DashboardWidgetType[]) => {
+    const newLayouts: {[key: string]: LayoutConfig[]} = {
+      lg: [],
+      md: [],
+      sm: [],
+      xs: []
+    };
+    
+    widgets.forEach(widget => {
+      const layoutItem = {
+        i: widget.widgetKey,
+        x: widget.position.x,
+        y: widget.position.y,
+        w: widget.position.w,
+        h: widget.position.h,
+        minW: 2,
+        minH: 2
+      };
+      
+      // Add to each breakpoint with different sizing for smaller screens
+      newLayouts.lg.push(layoutItem);
+      newLayouts.md.push({...layoutItem, w: Math.min(layoutItem.w, 6), h: layoutItem.h});
+      newLayouts.sm.push({...layoutItem, w: Math.min(layoutItem.w, 4), h: layoutItem.h});
+      newLayouts.xs.push({...layoutItem, w: Math.min(layoutItem.w, 2), h: layoutItem.h});
+    });
+    
+    setLayouts(newLayouts);
+  };
+
+  // Initialize layouts when dashboard config changes
+  useEffect(() => {
+    if (dashboardConfig && dashboardConfig.widgets) {
+      initializeLayouts(dashboardConfig.widgets);
+    }
+  }, [dashboardConfig?.id]); // Only reinitialize when the dashboard ID changes
+
+  // Load available components
+  useEffect(() => {
+    // In a real app, this could be fetched from an API
+    setAvailableComponents([
+      {
+        id: "line-chart",
+        name: "Line Chart",
+        type: "chart",
+        subtype: "line",
+        description: "Standard line chart for time series data",
+        defaultDataSource: "metrics/time-series",
+        defaultSize: { w: 6, h: 4 },
+        defaultSettings: { showLegend: true, fillArea: false }
+      },
+      {
+        id: "bar-chart",
+        name: "Bar Chart",
+        type: "chart",
+        subtype: "bar",
+        description: "Vertical bar chart for comparison data",
+        defaultDataSource: "metrics/status",
+        defaultSize: { w: 4, h: 4 },
+        defaultSettings: { showLegend: true, stacked: false }
+      },
+      {
+        id: "status-card",
+        name: "Status Card",
+        type: "card",
+        description: "Simple card showing a single metric with trend",
+        defaultDataSource: "metrics/summary",
+        defaultSize: { w: 2, h: 2 },
+        defaultSettings: { metric: "passRate", showTrend: true }
+      },
+      {
+        id: "data-table",
+        name: "Data Table",
+        type: "table",
+        description: "Interactive table for showing detailed test results",
+        defaultDataSource: "tests",
+        defaultSize: { w: 6, h: 6 },
+        defaultSettings: { pageSize: 5, sortable: true }
+      },
+      {
+        id: "gauge-chart",
+        name: "Gauge Chart",
+        type: "chart",
+        subtype: "gauge",
+        description: "Gauge chart for showing progress toward a goal",
+        defaultDataSource: "metrics/summary",
+        defaultSize: { w: 3, h: 3 },
+        defaultSettings: { metric: "passRate", min: 0, max: 100 }
+      }
+    ]);
+  }, []);
+
   const renderRepositories = () => {
     return (
       <>
@@ -807,7 +1014,7 @@ const Dashboard: React.FC = () => {
         {!selectedRepository ? (
           <div className="bg-gray-800 p-4 rounded-lg shadow-md text-center border border-gray-700">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-1.995 1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
             <p className="text-gray-400">Please select a repository to view its test results</p>
           </div>
@@ -1140,7 +1347,138 @@ const Dashboard: React.FC = () => {
     );
   };
 
+  const renderDashboardCustomizer = () => {
+    if (!dashboardConfig && !forceCustom) return null;
+    const localConfig = dashboardConfig || { widgets: [] };
+
+    const handleSave = async () => {
+      const completeConfig: DashboardConfig = {
+        ...localConfig,
+        userId: 'Swapnendu003',
+        name: dashboardConfig?.name || 'Default Dashboard Name',
+        description: dashboardConfig?.description || 'Default Description',
+      };
+      await saveDashboardConfig(completeConfig, 'Swapnendu003');
+    };
+
+    return (
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-white">
+            {isEditMode ? 'Edit Dashboard' : dashboardConfig?.name || 'My Dashboard'}
+          </h3>
+          <div className="flex space-x-2">
+            <button 
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={`px-3 py-1 rounded text-xs transition-all duration-300 flex items-center ${
+                isEditMode 
+                  ? 'bg-gray-700 text-[#f97316] border border-[#f97316]' 
+                  : 'bg-gray-700 text-gray-300 hover:text-[#f97316] border border-gray-600'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              {isEditMode ? 'Done Editing' : 'Customize Dashboard'}
+            </button>
+            
+            {isEditMode && (
+              <button 
+                onClick={() => setShowComponentLibrary(true)}
+                className="bg-gray-700 text-[#f97316] border border-[#f97316] hover:bg-gray-600 px-3 py-1 rounded text-xs transition-all duration-300 flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Widget
+              </button>
+            )}
+            
+            {isEditMode && (
+              <button 
+                onClick={handleSave}
+                className="bg-orange-600 text-white px-3 py-1 rounded text-xs"
+              >
+                Save
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <ResponsiveGridLayout
+          className="layout"
+          layouts={layouts}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
+          cols={{ lg: 12, md: 10, sm: 6, xs: 4 }}
+          rowHeight={60}
+          onLayoutChange={onLayoutChange}
+          isDraggable={isEditMode}
+          isResizable={isEditMode}
+          compactType="vertical"
+        >
+          {localConfig.widgets.map(widget => (
+            <div key={widget.widgetKey} className="dashboard-widget">
+              <DashboardWidget
+                widget={widget}
+                repositories={repositories}
+                timeSeriesData={timeSeriesData}
+                metricsData={metricsData}
+                isEditMode={isEditMode}
+                onRemove={() => removeWidgetFromDashboard(widget.widgetKey)}
+                onEdit={() => setSelectedComponentForEdit(widget.widgetKey)}
+                onSettingsChange={(settings) => updateWidgetSettings(widget.widgetKey, settings)}
+                selectedRepository={selectedRepository}
+                repositoryTests={repositoryTests}
+                testStatusCounts={testStatusCounts}
+                timePeriod={timePeriod}
+              />
+            </div>
+          ))}
+        </ResponsiveGridLayout>
+        
+        {showComponentLibrary && (
+          <ComponentLibrary
+            components={availableComponents}
+            onSelect={addComponentToDashboard}
+            onClose={() => setShowComponentLibrary(false)}
+          />
+        )}
+        
+        {selectedComponentForEdit && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 p-4 rounded-lg shadow-md max-w-2xl w-full border border-gray-700">
+              <h4 className="text-sm font-semibold text-white mb-3">Edit Widget</h4>
+              
+              {/* Widget editor would go here - specific to each widget type */}
+              <div className="grid grid-cols-1 gap-3 mb-4">
+                {/* Basic widget settings would be here */}
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <button 
+                  onClick={() => setSelectedComponentForEdit(null)}
+                  className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded text-xs transition-all duration-300"
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="bg-gray-700 text-[#f97316] border border-[#f97316] hover:bg-gray-600 px-3 py-1 rounded text-xs transition-all duration-300"
+                >
+                  Apply Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderMetricsDashboard = () => {
+    if (dashboardConfig || forceCustom) {
+      return renderDashboardCustomizer();
+    }
+
     return (
       <>
         <div className="flex justify-between items-center mb-4">
@@ -1416,6 +1754,12 @@ const Dashboard: React.FC = () => {
             </table>
           </div>
         </div>
+        <button 
+          onClick={() => setForceCustom(true)}
+          className="bg-gray-700 text-[#f97316] border border-[#f97316] hover:bg-gray-600 px-3 py-1 rounded text-xs transition-all duration-300 flex items-center"
+        >
+          Edit Dashboard
+        </button>
       </>
     );
   };
