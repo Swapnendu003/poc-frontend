@@ -22,7 +22,7 @@ const ComponentLibrary: React.FC<ComponentLibraryProps> = ({ components, onSelec
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-all duration-300 hover:backdrop-blur-sm">
-      <div className="bg-gray-800 rounded-lg shadow-lg max-w-4xl w-full border border-gray-700 max-h-[80vh] flex flex-col">
+      <div className={` 'bg-white text-black'} rounded-lg shadow-lg max-w-4xl w-full border border-gray-700 max-h-[80vh] flex flex-col`}>
         <div className="p-4 border-b border-gray-700">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-base font-bold text-white">Component Library</h3>

@@ -41,6 +41,7 @@ interface DashboardWidgetProps {
   repositoryTests: TestResult[];
   testStatusCounts: {[key: string]: number};
   timePeriod: '24h' | '7d' | '30d' | '90d';
+
 }
 
 const DashboardWidget: React.FC<DashboardWidgetProps> = ({
@@ -55,7 +56,8 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   selectedRepository,
   repositoryTests,
   testStatusCounts,
-  timePeriod
+  timePeriod,
+
 }) => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   
@@ -273,7 +275,7 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   };
   
   const renderDoughnutChart = () => {
-    // Similar to pie chart but with doughnut
+
     const data = {
       labels: ['Passed', 'Failed', 'Skipped', 'Error'],
       datasets: [
@@ -672,7 +674,7 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   };
   
   return (
-    <div className="h-full w-full bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-md flex flex-col transition-transform duration-300 hover:scale-105">
+    <div className={   'bg-white text-black'}>
       {isEditMode && (
         <div className="p-1 bg-gray-700 flex justify-between items-center border-b border-gray-600">
           <div className="flex items-center">

@@ -20,6 +20,7 @@ import 'react-resizable/css/styles.css';
 import DashboardWidget from '@/components/DashboardWidget';
 import ComponentLibrary from '@/components/ComponentLibrary';
 import { DashboardComponent, LayoutConfig } from '@/types/dashboardTypes';
+import { ShineBorder } from "@/components/magicui/shine-border";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -1027,9 +1028,10 @@ const Dashboard: React.FC = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
               <div 
-                className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-green-500 hover:border-green-400 hover:shadow-green-300/50 transition-all duration-300 cursor-pointer"
+                className="relative bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-green-500 hover:border-green-400 hover:shadow-green-300/50 transition-all duration-300 cursor-pointer"
                 onClick={() => setTestStatusFilter(testStatusFilter === 'passed' ? null : 'passed')}
               >
+                <ShineBorder className="rounded-lg" borderWidth={1} />
                 <h3 className="text-sm font-semibold text-gray-300 mb-1">Passed</h3>
                 <p className="text-2xl font-bold text-green-500">{testStatusCounts.passed || 0}</p>
                 <div className="mt-1 flex items-center">
@@ -1039,9 +1041,10 @@ const Dashboard: React.FC = () => {
               </div>
               
               <div 
-                className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-red-500 hover:border-red-400 hover:shadow-red-300/50 transition-all duration-300 cursor-pointer"
+                className="relative bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-red-500 hover:border-red-400 hover:shadow-red-300/50 transition-all duration-300 cursor-pointer"
                 onClick={() => setTestStatusFilter(testStatusFilter === 'failed' ? null : 'failed')}
               >
+                <ShineBorder className="rounded-lg" borderWidth={1} />
                 <h3 className="text-sm font-semibold text-gray-300 mb-1">Failed</h3>
                 <p className="text-2xl font-bold text-red-500">{testStatusCounts.failed || 0}</p>
                 <div className="mt-1 flex items-center">
@@ -1051,9 +1054,10 @@ const Dashboard: React.FC = () => {
               </div>
               
               <div 
-                className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-yellow-400 hover:border-yellow-300 hover:shadow-yellow-100/50 transition-all duration-300 cursor-pointer"
+                className="relative bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-yellow-400 hover:border-yellow-300 hover:shadow-yellow-100/50 transition-all duration-300 cursor-pointer"
                 onClick={() => setTestStatusFilter(testStatusFilter === 'skipped' ? null : 'skipped')}
               >
+                <ShineBorder className="rounded-lg" borderWidth={1} />
                 <h3 className="text-sm font-semibold text-gray-300 mb-1">Skipped</h3>
                 <p className="text-2xl font-bold text-yellow-400">{testStatusCounts.skipped || 0}</p>
                 <div className="mt-1 flex items-center">
@@ -1063,9 +1067,10 @@ const Dashboard: React.FC = () => {
               </div>
               
               <div 
-                className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-gray-500 hover:border-gray-400 hover:shadow-gray-300/50 transition-all duration-300 cursor-pointer"
+                className="relative bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-gray-500 hover:border-gray-400 hover:shadow-gray-300/50 transition-all duration-300 cursor-pointer"
                 onClick={() => setTestStatusFilter(testStatusFilter === 'error' ? null : 'error')}
               >
+                <ShineBorder className="rounded-lg" borderWidth={1} />
                 <h3 className="text-sm font-semibold text-gray-300 mb-1">Error</h3>
                 <p className="text-2xl font-bold text-gray-500">{testStatusCounts.error || 0}</p>
                 <div className="mt-1 flex items-center">
@@ -1527,7 +1532,8 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <div className="bg-gray-900 p-4 rounded-md shadow-md border border-indigo-500/50 hover:shadow-xl transition-all duration-300">
+          <div className="relative bg-gray-900 p-4 rounded-md shadow-md border border-[#f97316]/50 hover:shadow-[#f97316]/70 transition-all duration-300">
+            <ShineBorder className="rounded-md" borderWidth={1} />
             <div className="flex items-center space-x-2 mb-3">
               <div className="p-1 bg-[#f97316]/20 rounded">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#f97316]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1540,7 +1546,8 @@ const Dashboard: React.FC = () => {
             <div className="mt-2 text-xs text-gray-400">{getPassRateTrend()} from previous period</div>
           </div>
           
-          <div className="bg-gray-900 p-4 rounded-md shadow-md border border-indigo-500/50 hover:shadow-xl transition-all duration-300">
+          <div className="relative bg-gray-900 p-4 rounded-md shadow-md border border-[#f97316]/50 hover:shadow-[#f97316]/70 transition-all duration-300">
+            <ShineBorder className="rounded-md" borderWidth={1} />
             <div className="flex items-center space-x-2 mb-3">
               <div className="p-1 bg-[#f97316]/20 rounded">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#f97316]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1553,7 +1560,8 @@ const Dashboard: React.FC = () => {
             <div className="mt-2 text-xs text-gray-400">Actively monitored repositories</div>
           </div>
           
-          <div className="bg-gray-900 p-4 rounded-md shadow-md border border-indigo-500/50 hover:shadow-xl transition-all duration-300">
+          <div className="relative bg-gray-900 p-4 rounded-md shadow-md border border-[#f97316]/50 hover:shadow-[#f97316]/70 transition-all duration-300">
+            <ShineBorder className="rounded-md" borderWidth={1} />
             <div className="flex items-center space-x-2 mb-3">
               <div className="p-1 bg-[#f97316]/20 rounded">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#f97316]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1566,7 +1574,8 @@ const Dashboard: React.FC = () => {
             <div className="mt-2 text-xs text-gray-400">{metricsData?.testsLast7Days || 0} tests in last {timePeriod}</div>
           </div>
           
-          <div className="bg-gray-900 p-4 rounded-md shadow-md border border-indigo-500/50 hover:shadow-xl transition-all duration-300">
+          <div className="relative bg-gray-900 p-4 rounded-md shadow-md border border-[#f97316]/50 hover:shadow-[#f97316]/70 transition-all duration-300">
+            <ShineBorder className="rounded-md" borderWidth={1} />
             <div className="flex items-center space-x-2 mb-3">
               <div className="p-1 bg-[#f97316]/20 rounded">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#f97316]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1581,7 +1590,8 @@ const Dashboard: React.FC = () => {
         </div>
         <h3 className="text-lg font-bold mb-3 text-white">Test Results by Status</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <div className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-green-500 hover:border-green-400 hover:shadow-green-300/50 transition-all duration-300">
+          <div className="relative bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-green-500 hover:border-green-400 hover:shadow-green-300/50 transition-all duration-300">
+            <ShineBorder className="rounded-lg" borderWidth={1} />
             <h3 className="text-sm font-semibold text-gray-300 mb-1">Passed</h3>
             <p className="text-2xl font-bold text-green-500">{metricsData?.testsByStatus?.passed || 0}</p>
             <div className="mt-1 bg-gray-600 h-1.5 rounded-full">
@@ -1595,7 +1605,8 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-red-500 hover:border-red-400 hover:shadow-red-300/50 transition-all duration-300">
+          <div className="relative bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-red-500 hover:border-red-400 hover:shadow-red-300/50 transition-all duration-300">
+            <ShineBorder className="rounded-lg" borderWidth={1} />
             <h3 className="text-sm font-semibold text-gray-300 mb-1">Failed</h3>
             <p className="text-2xl font-bold text-red-500">{metricsData?.testsByStatus?.failed || 0}</p>
             <div className="mt-1 bg-gray-600 h-1.5 rounded-full">
@@ -1609,7 +1620,8 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-yellow-400 hover:border-yellow-300 hover:shadow-yellow-100/50 transition-all duration-300">
+          <div className="relative bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-yellow-400 hover:border-yellow-300 hover:shadow-yellow-100/50 transition-all duration-300">
+            <ShineBorder className="rounded-lg" borderWidth={1} />
             <h3 className="text-sm font-semibold text-gray-300 mb-1">Skipped</h3>
             <p className="text-2xl font-bold text-yellow-400">{metricsData?.testsByStatus?.skipped || 0}</p>
             <div className="mt-1 bg-gray-600 h-1.5 rounded-full">
@@ -1623,7 +1635,8 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-gray-500 hover:border-gray-400 hover:shadow-gray-300/50 transition-all duration-300">
+          <div className="relative bg-gray-900 p-3 rounded-lg shadow-md border-t-4 border-gray-500 hover:border-gray-400 hover:shadow-gray-300/50 transition-all duration-300">
+            <ShineBorder className="rounded-lg" borderWidth={1} />
             <h3 className="text-sm font-semibold text-gray-300 mb-1">Error</h3>
             <p className="text-2xl font-bold text-gray-500">{metricsData?.testsByStatus?.error || 0}</p>
             <div className="mt-1 bg-gray-600 h-1.5 rounded-full">
